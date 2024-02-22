@@ -40,7 +40,7 @@ Module Program
 
         'inserting data from AddFoodConsumptionByName from NutriaryDAL
         Dim objNutriaryDAL As New NutriaryDAL
-        Dim result = objNutriaryDAL.AddFoodConsumptionByName(10, "Nasi Goreng", 200)
+        Dim result = objNutriaryDAL.AddFoodConsumptionByName(userId, foodName, quantity)
         If (result > 0) Then
             Console.WriteLine("Food consumption added successfully")
         Else
@@ -89,47 +89,55 @@ Module Program
         Dim lstUserProfile As New List(Of UserProfile)
         lstUserProfile = objNutriaryDAL.ViewProfile(username)
 
-        Console.WriteLine("Selamat datang " & username)
-        Console.WriteLine("1. Lihat Profil")
-        Console.WriteLine("2. Lihat Nutrisi Makanan")
-        Console.WriteLine("3. Tambahkan Food Consumption")
-        Console.WriteLine("4. Keluar")
-        Console.Write("Pilih menu : ")
-        Dim menu As Integer = Console.ReadLine()
-        Select Case menu
-            Case 1
-                ViewUserProfile(username)
-            Case 2
-                For Each obj In lstUserProfile
-                    GetFoodNutrition(obj.userId)
-                Next
-            Case 3
-                For Each obj In lstUserProfile
-                    AddFoodConsumptionByName(obj.userId)
-                Next
-            Case 4
-                Environment.Exit(0)
-        End Select
-
+        Dim exitMenu As Boolean = False
+        While Not exitMenu
+            Console.WriteLine("Selamat datang " & username)
+            Console.WriteLine("1. Lihat Profil")
+            Console.WriteLine("2. Lihat Nutrisi Makanan")
+            Console.WriteLine("3. Tambahkan Food Consumption")
+            Console.WriteLine("4. Keluar")
+            Console.Write("Pilih menu : ")
+            Dim menu As Integer = Console.ReadLine()
+            Select Case menu
+                Case 1
+                    ViewUserProfile(username)
+                Case 2
+                    For Each obj In lstUserProfile
+                        GetFoodNutrition(obj.userId)
+                    Next
+                Case 3
+                    For Each obj In lstUserProfile
+                        AddFoodConsumptionByName(obj.userId)
+                    Next
+                Case 4
+                    exitMenu = True
+                    Environment.Exit(0)
+            End Select
+        End While
     End Sub
 
     Sub InitialMenu()
-        Console.WriteLine("Selamat datang di Nutriary !")
-        Console.WriteLine("1. Buat Akun")
-        Console.WriteLine("2. Login")
-        Console.WriteLine("3. Keluar")
-        Console.Write("Pilih menu : ")
-        Dim menu As Integer = Console.ReadLine()
-        Select Case menu
-            Case 1
-                'CreateAccount()
-                Console.WriteLine("lom ada")
-            Case 2
-                UserLogin()
-            Case 3
-                Environment.Exit(0)
-        End Select
+        Dim exitApp As Boolean = False
+        While Not exitApp
+            Console.WriteLine("Selamat datang di Nutriary !")
+            Console.WriteLine("1. Buat Akun")
+            Console.WriteLine("2. Login")
+            Console.WriteLine("3. Keluar")
+            Console.Write("Pilih menu : ")
+            Dim menu As Integer = Console.ReadLine()
+            Select Case menu
+                Case 1
+                    'CreateAccount()
+                    Console.WriteLine("lom ada")
+                Case 2
+                    UserLogin()
+                Case 3
+                    exitApp = True
+                    Environment.Exit(0)
+            End Select
+        End While
     End Sub
+
     Sub Main(args As String())
         InitialMenu()
 
