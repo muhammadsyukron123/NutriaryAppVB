@@ -3,11 +3,11 @@ Imports Nutriary.DAL
 Imports NutriaryApp.BO
 
 Module Program
-    Sub GetFoodNutrition()
+    Sub GetFoodNutrition(userId As Integer)
         'getting data from GetFoodNutrition from NutriaryDAL
         Dim objNutriaryDAL As New NutriaryDAL
         Dim lstFoodNutrition As New List(Of GetFoodNutrition)
-        lstFoodNutrition = objNutriaryDAL.GetFoodNutrition(10, "2024-02-22")
+        lstFoodNutrition = objNutriaryDAL.GetFoodNutrition(10, Date.Now)
         For Each obj In lstFoodNutrition
             Console.WriteLine(New String("="c, 120))
             Console.WriteLine()
@@ -30,11 +30,29 @@ Module Program
         End If
     End Sub
 
+    Sub AddFoodConsumptionByName(userId As Integer)
+        Console.WriteLine("Menambahkan food consumption berdasarkan nama makanan")
+        Console.WriteLine("Masukkan nama makanan")
+        Dim foodName As String = Console.ReadLine()
+        Console.WriteLine("Masukkan jumlah makanan")
+        Dim quantity As Decimal = Console.ReadLine()
+
+
+        'inserting data from AddFoodConsumptionByName from NutriaryDAL
+        Dim objNutriaryDAL As New NutriaryDAL
+        Dim result = objNutriaryDAL.AddFoodConsumptionByName(10, "Nasi Goreng", 200)
+        If (result > 0) Then
+            Console.WriteLine("Food consumption added successfully")
+        Else
+            Console.WriteLine("Failed to add food consumption")
+        End If
+    End Sub
+
     Sub UserLogin()
         'getting data from UserLogin from NutriaryDAL
         Dim objNutriaryDAL As New NutriaryDAL
 
-        Console.WriteLine("Selamat datang di Nutriary")
+        Console.WriteLine("Silahkan login menggunakan username dan password anda")
         Console.Write("Masukkan username : ")
         Dim username As String = Console.ReadLine()
         Console.Write("Masukkan password : ")
@@ -44,7 +62,7 @@ Module Program
         If (result > 0) Then
             Console.WriteLine("Login Berhasil!")
             Console.WriteLine()
-            ViewUserProfile(username)
+            NutriaryMenu(username)
         Else
             Console.WriteLine("Login failed")
         End If
@@ -63,13 +81,57 @@ Module Program
             Console.WriteLine("{0,-10} {1,-20} {2,-10} {3,-10} {4,-10} {5,-10}",
             obj.username.PadRight(25), obj.email, obj.gender, obj.age, obj.height, obj.weight)
         Next
+
     End Sub
 
+    Sub NutriaryMenu(username As String)
+        Dim objNutriaryDAL As New NutriaryDAL
+        Dim lstUserProfile As New List(Of UserProfile)
+        lstUserProfile = objNutriaryDAL.ViewProfile(username)
+
+        Console.WriteLine("Selamat datang " & username)
+        Console.WriteLine("1. Lihat Profil")
+        Console.WriteLine("2. Lihat Nutrisi Makanan")
+        Console.WriteLine("3. Tambahkan Food Consumption")
+        Console.WriteLine("4. Keluar")
+        Console.Write("Pilih menu : ")
+        Dim menu As Integer = Console.ReadLine()
+        Select Case menu
+            Case 1
+                ViewUserProfile(username)
+            Case 2
+                For Each obj In lstUserProfile
+                    GetFoodNutrition(obj.userId)
+                Next
+            Case 3
+                For Each obj In lstUserProfile
+                    AddFoodConsumptionByName(obj.userId)
+                Next
+            Case 4
+                Environment.Exit(0)
+        End Select
+
+    End Sub
+
+    Sub InitialMenu()
+        Console.WriteLine("Selamat datang di Nutriary !")
+        Console.WriteLine("1. Buat Akun")
+        Console.WriteLine("2. Login")
+        Console.WriteLine("3. Keluar")
+        Console.Write("Pilih menu : ")
+        Dim menu As Integer = Console.ReadLine()
+        Select Case menu
+            Case 1
+                'CreateAccount()
+                Console.WriteLine("lom ada")
+            Case 2
+                UserLogin()
+            Case 3
+                Environment.Exit(0)
+        End Select
+    End Sub
     Sub Main(args As String())
+        InitialMenu()
 
-        UserLogin()
-
-
-        GetFoodNutrition()
     End Sub
 End Module

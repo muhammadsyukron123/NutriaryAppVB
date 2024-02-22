@@ -7,6 +7,8 @@ Public Interface INutriary
 
     Function AddFoodConsumption(ByVal userID As Integer, ByVal FoodID As String, ByVal quantity As Decimal)
 
+    Function AddFoodConsumptionByName(ByVal userID As Integer, ByVal FoodName As String, ByVal quantity As Decimal)
+
     Function UserLogin(ByVal username As String, ByVal password As String)
 
     Function ViewProfile(ByVal username) As List(Of UserProfile)

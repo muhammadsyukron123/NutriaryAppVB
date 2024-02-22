@@ -138,6 +138,7 @@ Public Class NutriaryDAL
             If dr.HasRows Then
                 While dr.Read()
                     Dim obj As New UserProfile
+                    obj.userId = dr("user_id")
                     obj.username = dr("username")
                     obj.email = dr("email")
                     obj.gender = dr("gender")
@@ -151,6 +152,24 @@ Public Class NutriaryDAL
         Catch sqlex As SqlException
             Throw New ArgumentException(sqlex.Message & " " & sqlex.Number)
         Catch ex As Exception
+        End Try
+    End Function
+
+    Public Function AddFoodConsumptionByName(userID As Integer, FoodName As String, quantity As Decimal) As Object Implements INutriary.AddFoodConsumptionByName
+        Try
+            cmd = New SqlCommand("usp_AddFoodConsumptionByName", conn)
+            cmd.CommandType = CommandType.StoredProcedure
+            cmd.Parameters.AddWithValue("@user_id", userID)
+            cmd.Parameters.AddWithValue("@food_name", FoodName)
+            cmd.Parameters.AddWithValue("@quantity", quantity)
+
+            conn.Open()
+            Dim result = cmd.ExecuteNonQuery()
+            Return result
+        Catch sqlex As SqlException
+            Throw New ArgumentException(sqlex.Message & " " & sqlex.Number)
+        Catch ex As Exception
+
         End Try
     End Function
 End Class
