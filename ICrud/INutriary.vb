@@ -13,4 +13,6 @@ Public Interface INutriary
 
     Function ViewProfile(ByVal username) As List(Of UserProfile)
 
+    Function GetConsumptionReport(ByVal userId As Integer, ByVal logDate As DateTime) As List(Of ConsumptionReport)
+
 End Interface
