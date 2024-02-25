@@ -9,22 +9,22 @@ Public Class NutriaryMenuManager
         lstFoodNutrition = objNutriaryDAL.GetDailyConsumption(userId)
 
         ' Table header
-        Console.WriteLine(New String("-", 115))
-        Console.WriteLine("{0,-10} {1,-20} {2,-10} {3,-15} {4,-20} {5,-15} {6,-15} {7,-15} {8,-15} {9,-15} {10,-15}",
-                      "Log ID", "Food Name", "Quantity", "Log Date", "Total Energy", "Total Protein", "Total Fat",
-                      "Total Carbs", "Total Fiber", "Total Calcium", "Total Iron", "Total Sodium")
-        Console.WriteLine(New String("-", 115))
+        Console.WriteLine(New String("-", 200))
+        Console.WriteLine("{0,-10} {1,-20} {2,-10} {3,-15} {4,-20} {5,-15} {6,-15} {7,-15} {8,-15} {9,-15} {10,-15} {11, -15}",
+                      "Log ID", "Food Name".PadRight(25), "Quantity", "Log Date", "Total Energy", "Total Protein", "Total Fat",
+                      "Total Carbs", "Total Fiber", "Total Calcium", "Total Iron", "Total Natrium")
+        Console.WriteLine(New String("-", 200))
 
         ' Table rows
         For Each obj In lstFoodNutrition
-            Console.WriteLine("{0,-10} {1,-20} {2,-10:F2} {3,-15} {4,-20:F2} {5,-15:F2} {6,-15:F2} {7,-15:F2} {8,-15:F2} {9,-15:F2} {10,-15:F2}",
-                          obj.log_id, obj.food_name, obj.quantity, obj.log_date.ToString("yyyy-MM-dd"),
+            Console.WriteLine("{0,-10} {1,-20} {2,-10:F2} {3,-15} {4,-20:F2} {5,-15:F2} {6,-15:F2} {7,-15:F2} {8,-15:F2} {9,-15:F2} {10,-15:F2} {11,-15:F2}",
+                          obj.log_id, obj.food_name.PadRight(25), obj.quantity, obj.log_date.ToString("yyyy-MM-dd"),
                           obj.total_energy_kcal, obj.total_protein_g, obj.total_fat_g, obj.total_carbs_g,
                           obj.total_fiber_g, obj.total_calcium_mg, obj.total_fe_mg, obj.total_natrium_mg)
         Next
 
         ' Table footer
-        Console.WriteLine(New String("-", 115))
+        Console.WriteLine(New String("-", 200))
 
 
 
@@ -43,9 +43,9 @@ Public Class NutriaryMenuManager
 
     Public Shared Sub AddFoodConsumptionByName(userId As Integer)
         Console.WriteLine("Menambahkan food consumption berdasarkan nama makanan")
-        Console.WriteLine("Masukkan nama makanan")
+        Console.Write("Masukkan nama makanan : ")
         Dim foodName As String = Console.ReadLine()
-        Console.WriteLine("Masukkan jumlah makanan")
+        Console.Write("Masukkan jumlah makanan : ")
         Dim quantity As Decimal = Console.ReadLine()
 
 
@@ -201,7 +201,7 @@ Public Class NutriaryMenuManager
     Public Shared Sub DeleteFoodConsumption()
         Dim objNutriaryDAL As New NutriaryDAL
         Console.WriteLine("Hapus konsumsi makanan")
-        Console.WriteLine("Masukkan log ID yang ingin dihapus")
+        Console.Write("Masukkan log ID yang ingin dihapus : ")
         Dim logId As Integer = Console.ReadLine()
 
         Dim result = objNutriaryDAL.DeleteFoodLogByID(logId)
