@@ -285,4 +285,84 @@ Public Class NutriaryDAL
             conn.Close()
         End Try
     End Function
+
+    Public Function GetDailyConsumption(userId As Integer) As List(Of GetDailyConsumedFood) Implements INutriary.GetDailyConsumption
+        Try
+            cmd = New SqlCommand("GetConsumedFoodsToday", conn)
+            cmd.CommandType = CommandType.StoredProcedure
+            cmd.Parameters.AddWithValue("@user_id", userId)
+            conn.Open()
+            dr = cmd.ExecuteReader()
+            Dim lstDailyConsumption As New List(Of GetDailyConsumedFood)
+            If dr.HasRows Then
+                While dr.Read()
+                    Dim obj As New GetDailyConsumedFood
+                    obj.log_id = dr("log_id")
+                    obj.user_id = dr("user_id")
+                    obj.food_id = dr("food_id")
+                    obj.quantity = dr("quantity")
+                    obj.log_date = dr("log_date")
+                    obj.food_name = dr("food_name")
+                    obj.total_energy_kcal = dr("total_energy_kcal")
+                    obj.total_protein_g = dr("total_protein_g")
+                    obj.total_fat_g = dr("total_fat_g")
+                    obj.total_carbs_g = dr("total_carbs_g")
+                    obj.total_fiber_g = dr("total_fiber_g")
+                    obj.total_calcium_mg = dr("total_calcium_mg")
+                    obj.total_fe_mg = dr("total_fe_mg")
+                    obj.total_natrium_mg = dr("total_natrium_mg")
+                    lstDailyConsumption.Add(obj)
+                End While
+            End If
+            Return lstDailyConsumption
+        Catch sqlex As SqlException
+            Throw New ArgumentException(sqlex.Message & " " & sqlex.Number)
+        Catch ex As Exception
+            Throw ex
+        Finally
+            cmd.Dispose()
+            conn.Close()
+        End Try
+    End Function
+
+    Public Function UpdateFoodQuantity(logId As Integer, Quantity As Decimal) As Object Implements INutriary.UpdateFoodQuantity
+        Try
+            cmd = New SqlCommand("usp_UpdateFoodQuantity", conn)
+            cmd.CommandType = CommandType.StoredProcedure
+            cmd.Parameters.AddWithValue("@log_id", logId)
+            cmd.Parameters.AddWithValue("@new_quantity", Quantity)
+            conn.Close()
+            conn.Open()
+
+            Dim result = cmd.ExecuteNonQuery()
+            Return result
+        Catch sqlex As SqlException
+            Throw New ArgumentException(sqlex.Message & " " & sqlex.Number)
+        Catch ex As Exception
+            Throw ex
+        Finally
+            cmd.Dispose()
+            conn.Close()
+        End Try
+    End Function
+
+
+
+    Public Function DeleteFoodLogByID(logId As Integer) As Object Implements INutriary.DeleteFoodLogByID
+        Try
+            cmd = New SqlCommand("usp_DeleteFoodLog", conn)
+            cmd.CommandType = CommandType.StoredProcedure
+            cmd.Parameters.AddWithValue("@log_id", logId)
+            conn.Open()
+            Dim result = cmd.ExecuteNonQuery()
+            Return result
+        Catch sqlex As SqlException
+            Throw New ArgumentException(sqlex.Message & " " & sqlex.Number)
+        Catch ex As Exception
+            Throw ex
+        Finally
+            cmd.Dispose()
+            conn.Close()
+        End Try
+    End Function
 End Class

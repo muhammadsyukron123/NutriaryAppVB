@@ -5,17 +5,29 @@ Public Class NutriaryMenuManager
     Public Shared Sub GetFoodNutrition(userId As Integer)
         'getting data from GetFoodNutrition from NutriaryDAL
         Dim objNutriaryDAL As New NutriaryDAL
-        Dim lstFoodNutrition As New List(Of GetFoodNutrition)
-        lstFoodNutrition = objNutriaryDAL.GetFoodNutrition(userId, Date.Now)
-        For Each obj In lstFoodNutrition
-            Console.WriteLine(New String("="c, 120))
-            Console.WriteLine()
-            Console.WriteLine("{0,-10} {1,-20} {2,-10:F2} {3,-10:F2} {4,-10:F2} {5,-10:F2} {6,-10:F2} {7,-10:F2} {8,-10:F2} {9,-10:F2}",
-                  "Food ID", "Food Name".PadRight(30), "Energy", "Protein", "Fat", "Carbs", "Fiber", "Calcium", "Iron", "Sodium")
+        Dim lstFoodNutrition As New List(Of GetDailyConsumedFood)
+        lstFoodNutrition = objNutriaryDAL.GetDailyConsumption(userId)
 
-            Console.WriteLine("{0,-10} {1,-20} {2,-10:F2} {3,-10:F2} {4,-10:F2} {5,-10:F2} {6,-10:F2} {7,-10:F2} {8,-10:F2} {9,-10:F2}",
-                  obj.food_id, obj.food_name.PadRight(30), obj.energy_kal, obj.protein_g, obj.fat_g, obj.carbs_g, obj.fiber_g, obj.calcium_mg, obj.fe_mg, obj.natrium_mg)
+        ' Table header
+        Console.WriteLine(New String("-", 115))
+        Console.WriteLine("{0,-10} {1,-20} {2,-10} {3,-15} {4,-20} {5,-15} {6,-15} {7,-15} {8,-15} {9,-15} {10,-15}",
+                      "Log ID", "Food Name", "Quantity", "Log Date", "Total Energy", "Total Protein", "Total Fat",
+                      "Total Carbs", "Total Fiber", "Total Calcium", "Total Iron", "Total Sodium")
+        Console.WriteLine(New String("-", 115))
+
+        ' Table rows
+        For Each obj In lstFoodNutrition
+            Console.WriteLine("{0,-10} {1,-20} {2,-10:F2} {3,-15} {4,-20:F2} {5,-15:F2} {6,-15:F2} {7,-15:F2} {8,-15:F2} {9,-15:F2} {10,-15:F2}",
+                          obj.log_id, obj.food_name, obj.quantity, obj.log_date.ToString("yyyy-MM-dd"),
+                          obj.total_energy_kcal, obj.total_protein_g, obj.total_fat_g, obj.total_carbs_g,
+                          obj.total_fiber_g, obj.total_calcium_mg, obj.total_fe_mg, obj.total_natrium_mg)
         Next
+
+        ' Table footer
+        Console.WriteLine(New String("-", 115))
+
+
+
     End Sub
 
     Public Shared Sub AddFoodConsumption()
@@ -165,6 +177,74 @@ Public Class NutriaryMenuManager
         End If
     End Sub
 
+    Public Shared Sub EditFoodConsumption(userId As Integer)
+        Dim objNutriaryDAL As New NutriaryDAL
+        Dim lstUserProfile As New List(Of UserProfile)
+        lstUserProfile = objNutriaryDAL.ViewProfile(userId)
+        For Each obj In lstUserProfile
+            GetFoodNutrition(obj.userId)
+        Next
+        Console.WriteLine("Edit konsumsi makanan")
+        Console.Write("Masukkan log ID yang ingin diubah : ")
+        Dim logId As Integer = Console.ReadLine()
+        Console.Write("Masukkan jumlah makanan baru : ")
+        Dim quantity As Decimal = Console.ReadLine()
+
+        Dim result = objNutriaryDAL.UpdateFoodQuantity(logId, quantity)
+        If (result > 0) Then
+            Console.WriteLine("Konsumsi makanan berhasil diubah!")
+        Else
+            Console.WriteLine("Gagal mengubah konsumsi makanan")
+        End If
+    End Sub
+
+    Public Shared Sub DeleteFoodConsumption()
+        Dim objNutriaryDAL As New NutriaryDAL
+        Console.WriteLine("Hapus konsumsi makanan")
+        Console.WriteLine("Masukkan log ID yang ingin dihapus")
+        Dim logId As Integer = Console.ReadLine()
+
+        Dim result = objNutriaryDAL.DeleteFoodLogByID(logId)
+        If (result > 0) Then
+            Console.WriteLine("Konsumsi makanan berhasil dihapus!")
+        Else
+            Console.WriteLine("Gagal menghapus konsumsi makanan")
+        End If
+    End Sub
+
+    Public Shared Sub EditFoodConsumptionMenu(username As String)
+        Dim exitMenu As Boolean = False
+        While Not exitMenu
+            Dim objNutriaryDAL As New NutriaryDAL
+            Dim lstUserProfile As New List(Of UserProfile)
+            lstUserProfile = objNutriaryDAL.ViewProfile(username)
+            For Each obj In lstUserProfile
+                GetFoodNutrition(obj.userId)
+            Next
+
+
+            Console.WriteLine()
+            Console.WriteLine("Edit konsumsi makanan")
+            Console.WriteLine("1. Edit konsumsi makanan")
+            Console.WriteLine("2. Hapus konsumsi makanan")
+            Console.WriteLine("3. Kembali")
+            Console.Write("Pilih menu : ")
+            Select Case Console.ReadLine()
+                Case "1"
+                    For Each obj In lstUserProfile
+                        EditFoodConsumption(obj.userId)
+                    Next
+                Case "2"
+                    DeleteFoodConsumption()
+                Case "3"
+                    exitMenu = True
+                    NutriaryMenu(username)
+            End Select
+        End While
+    End Sub
+
+
+
     Public Shared Sub NutriaryMenu(username As String)
         Dim objNutriaryDAL As New NutriaryDAL
         Dim lstUserProfile As New List(Of UserProfile)
@@ -179,7 +259,8 @@ Public Class NutriaryMenuManager
             Console.WriteLine("3. Lihat daftar konsumsi makanan")
             Console.WriteLine("4. Lihat laporan konsumsi makanan anda")
             Console.WriteLine("5. Tambahkan konsumsi makanan")
-            Console.WriteLine("6. Keluar")
+            Console.WriteLine("6. Edit konsumsi makanan")
+            Console.WriteLine("7. Keluar")
             Console.Write("Pilih menu : ")
             Dim menu As Integer = Console.ReadLine()
             Select Case menu
@@ -202,6 +283,10 @@ Public Class NutriaryMenuManager
                         AddFoodConsumptionByName(obj.userId)
                     Next
                 Case 6
+                    For Each obj In lstUserProfile
+                        EditFoodConsumptionMenu(username)
+                    Next
+                Case 7
                     exitMenu = True
                     Environment.Exit(0)
             End Select

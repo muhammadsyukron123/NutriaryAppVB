@@ -20,4 +20,10 @@ Public Interface INutriary
 
     Function GetUserDataByUsername(ByVal username As String) As List(Of Users)
 
+    Function GetDailyConsumption(ByVal userId As Integer) As List(Of GetDailyConsumedFood)
+
+    Function UpdateFoodQuantity(ByVal logId As Integer, ByVal Quantity As Decimal)
+
+    Function DeleteFoodLogByID(ByVal logId As Integer)
+
 End Interface
