@@ -63,6 +63,10 @@ CREATE OR ALTER PROCEDURE usp_InsertUserProfile
     @target_goal_id INT
 AS
 BEGIN
+    DECLARE @bmr DECIMAL(10, 2);
+    DECLARE @activity_multiplier DECIMAL(5, 2);
+    DECLARE @calorie_adjustment INT;
+
     BEGIN TRANSACTION;
 
     BEGIN TRY
@@ -77,10 +81,26 @@ BEGIN
                 weight = @weight
             WHERE user_id = @user_id;
 
-			UPDATE UserCalorieInformation
-			SET user_id = @user_id,
-				activity_level_id = @activity_level_id,
-				target_goal_id = @target_goal_id
+            -- Get activity multiplier based on activity level
+            SELECT @activity_multiplier = activity_multiplier
+            FROM ActivityLevels
+            WHERE activity_id = @activity_level_id;
+
+            -- Get calorie adjustment based on target goal
+            SELECT @calorie_adjustment = calorie_adjustment
+            FROM TargetGoals
+            WHERE goal_id = @target_goal_id;
+
+            -- Calculate BMR using the function
+            SET @bmr = dbo.CalculateBMRFunction(@gender, @age, @weight, @height, @activity_multiplier, @calorie_adjustment);
+
+            -- Update BMR in UserCalorieInformation table
+            UPDATE UserCalorieInformation
+            SET 
+                bmr = @bmr,
+                activity_level_id = @activity_level_id,
+                target_goal_id = @target_goal_id
+            WHERE user_id = @user_id;
         END
         ELSE
         BEGIN
@@ -88,11 +108,22 @@ BEGIN
             INSERT INTO UserProfile (user_id, gender, age, height, weight)
             VALUES (@user_id, @gender, @age, @height, @weight);
 
-			-- Insert ke tabel UserCalorieInformation
-			-- Lakukan operasi ini tanpa pengecekan karena bisa saja data belum ada dan perlu dimasukkan baru
-			INSERT INTO UserCalorieInformation (user_id, activity_level_id, target_goal_id)
-			VALUES (@user_id, @activity_level_id, @target_goal_id);
+            -- Get activity multiplier based on activity level
+            SELECT @activity_multiplier = activity_multiplier
+            FROM ActivityLevels
+            WHERE activity_id = @activity_level_id;
 
+            -- Get calorie adjustment based on target goal
+            SELECT @calorie_adjustment = calorie_adjustment
+            FROM TargetGoals
+            WHERE goal_id = @target_goal_id;
+
+            -- Calculate BMR using the function
+            SET @bmr = dbo.CalculateBMRFunction(@gender, @age, @weight, @height, @activity_multiplier, @calorie_adjustment);
+
+            -- Insert data into UserCalorieInformation table
+            INSERT INTO UserCalorieInformation (user_id, bmr, activity_level_id, target_goal_id)
+            VALUES (@user_id, @bmr, @activity_level_id, @target_goal_id);
         END
 
         COMMIT TRANSACTION;
@@ -100,13 +131,15 @@ BEGIN
     BEGIN CATCH
         ROLLBACK TRANSACTION;
         -- Tangani error di sini
-        THROW;
+        PRINT ERROR_MESSAGE();
     END CATCH
 END
 
 
+
+
 EXEC usp_InsertUserProfile 
-	@user_id = 10,
+	@user_id = 15,
 	@gender = 'Male',
     @age = 30,
     @height = 180,
@@ -195,9 +228,9 @@ EXEC usp_LoginUser
 -- Jika login berhasil, maka akan mencetak pesan bahwa login berhasil
 -- Jika login gagal, maka akan mencetak pesan kesalahan yang sesuai
 
---------------------------------------------
--- 4. usp_ViewUserProfile Store Procedure --
---------------------------------------------
+------------------------------------------------------------------------
+-- 4. usp_ViewUserProfile Store Procedure & usp_GetUserDataByUsername --
+------------------------------------------------------------------------
 
 CREATE OR ALTER PROCEDURE ViewUserProfile
     @username NVARCHAR(50)
@@ -219,6 +252,25 @@ GO
 -- Menjalankan stored procedure ViewUserProfile dengan parameter username
 EXEC ViewUserProfile 
     @username = 'john_doe2';
+
+CREATE OR ALTER PROCEDURE usp_GetUserDataByUsername
+    @username NVARCHAR(50)
+AS
+BEGIN
+    BEGIN TRY
+        -- Mengambil data dari tabel Users berdasarkan username
+        SELECT *
+        FROM Users
+        WHERE username = @username;
+    END TRY
+    BEGIN CATCH
+        -- Menampilkan pesan kesalahan jika terjadi masalah
+        PRINT ERROR_MESSAGE();
+    END CATCH
+END
+GO
+
+EXEC usp_GetUserDataByUsername @username = 'mhmmdsykrn_'
 
 
 ----------------------------------------------
@@ -357,7 +409,7 @@ GO
 
 -- Menjalankan stored procedure InsertUserBMR dengan parameter yang sesuai
 EXEC usp_UpdateUserBMR
-    @user_id = 10,
+    @user_id = 15,
     @gender = 'Male',
     @age = 30,
     @weight = 80.0,
@@ -562,18 +614,19 @@ BEGIN
                 @total_natrium_mg DECIMAL(10, 2);
 
         -- Menghitung total nutrisi dari konsumsi makanan pengguna pada tanggal tertentu
-        SELECT 
-            @total_energy_kal = SUM(FNI.energy_kal),
-            @total_protein_g = SUM(FNI.protein_g),
-            @total_fat_g = SUM(FNI.fat_g),
-            @total_carbs_g = SUM(FNI.carbs_g),
-            @total_fiber_g = SUM(FNI.fiber_g),
-            @total_calcium_mg = SUM(FNI.calcium_mg),
-            @total_fe_mg = SUM(FNI.fe_mg),
-            @total_natrium_mg = SUM(FNI.natrium_mg)
-        FROM DailyLogs DL
-        INNER JOIN FoodNutritionInfo FNI ON DL.food_id = FNI.food_id
-        WHERE DL.user_id = @user_id AND DL.log_date = @log_date;
+		SELECT 
+			@total_energy_kal = ISNULL(SUM(FNI.energy_kal), 0),
+			@total_protein_g = ISNULL(SUM(FNI.protein_g), 0),
+			@total_fat_g = ISNULL(SUM(FNI.fat_g), 0),
+			@total_carbs_g = ISNULL(SUM(FNI.carbs_g), 0),
+			@total_fiber_g = ISNULL(SUM(FNI.fiber_g), 0),
+			@total_calcium_mg = ISNULL(SUM(FNI.calcium_mg), 0),
+			@total_fe_mg = ISNULL(SUM(FNI.fe_mg), 0),
+			@total_natrium_mg = ISNULL(SUM(FNI.natrium_mg), 0)
+		FROM DailyLogs DL
+		LEFT JOIN FoodNutritionInfo FNI ON DL.food_id = FNI.food_id
+		WHERE DL.user_id = @user_id AND DL.log_date = @log_date;
+
 
         -- Mendapatkan nilai BMR pengguna dari tabel UserCalorieInformation
         DECLARE @bmr DECIMAL(10, 2);
@@ -611,8 +664,8 @@ END
 GO
 
 EXEC usp_GetConsumptionReport 
-	@user_id = 10, 
-	@log_date = '2024-02-16';
+	@user_id = 14, 
+	@log_date = '2024-02-25';
 
 -------------------------------
 -- View to get weekly report --
@@ -723,7 +776,7 @@ END;
 
 
 EXEC GetConsumedFoodsToday
-	@user_id = 10
+	@user_id = 16
 
 ------------------------
 --DeleteGoodLogByID SP--
@@ -736,6 +789,78 @@ BEGIN
 	DELETE FROM DailyLogs WHERE 
 	log_id = @log_id
 END;
+
+--------------------------------------------
+-- usp_UpdateFoodQuantity Store Procedure --
+--------------------------------------------
+
+CREATE OR ALTER PROCEDURE usp_UpdateFoodQuantity
+    @log_id INT,
+    @new_quantity DECIMAL(10, 2)
+AS
+BEGIN
+    BEGIN TRANSACTION;
+
+    BEGIN TRY
+        -- Periksa apakah log_id ada dalam tabel DailyLogs
+        IF EXISTS (SELECT 1 FROM DailyLogs WHERE log_id = @log_id)
+        BEGIN
+            -- Update quantity makanan
+            UPDATE DailyLogs
+            SET quantity = @new_quantity
+            WHERE log_id = @log_id;
+
+            COMMIT TRANSACTION;
+            PRINT 'Quantity makanan berhasil diperbarui.';
+        END
+        ELSE
+        BEGIN
+            -- Jika log_id tidak ditemukan, kirimkan pesan kesalahan
+            THROW 51000, 'Log ID tidak ditemukan dalam tabel DailyLogs.', 1;
+        END
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        -- Tangani error
+        PRINT ERROR_MESSAGE();
+    END CATCH
+END;
+
+---------------------------------------
+-- usp_DeleteFoodLog Store Procedure --
+---------------------------------------
+
+CREATE OR ALTER PROCEDURE usp_DeleteFoodLog
+    @log_id INT
+AS
+BEGIN
+    BEGIN TRANSACTION;
+
+    BEGIN TRY
+        -- Periksa apakah log_id ada dalam tabel DailyLogs
+        IF EXISTS (SELECT 1 FROM DailyLogs WHERE log_id = @log_id)
+        BEGIN
+            -- Hapus log makanan berdasarkan log_id
+            DELETE FROM DailyLogs
+            WHERE log_id = @log_id;
+
+            COMMIT TRANSACTION;
+            PRINT 'Log makanan berhasil dihapus.';
+        END
+        ELSE
+        BEGIN
+            -- Jika log_id tidak ditemukan, kirimkan pesan kesalahan
+            THROW 51000, 'Log ID tidak ditemukan dalam tabel DailyLogs.', 1;
+        END
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        -- Tangani error
+        PRINT ERROR_MESSAGE();
+    END CATCH
+END;
+
+
 
 
 
