@@ -210,5 +210,79 @@ Public Class NutriaryDAL
         End Try
     End Function
 
+    Public Function RegisterUser(username As String, password As String, email As String) As Object Implements INutriary.RegisterUser
+        Try
+            cmd = New SqlCommand("usp_RegisterUser", conn)
+            cmd.CommandType = CommandType.StoredProcedure
+            cmd.Parameters.AddWithValue("@username", username)
+            cmd.Parameters.AddWithValue("@password", password)
+            cmd.Parameters.AddWithValue("@email", email)
 
+            conn.Open()
+            Dim result = cmd.ExecuteNonQuery()
+            Return result
+        Catch sqlex As SqlException
+            Throw New ArgumentException(sqlex.Message & " " & sqlex.Number)
+        Catch ex As Exception
+            Throw ex
+        Finally
+            cmd.Dispose()
+            conn.Close()
+        End Try
+    End Function
+
+    Public Function InsertUserProfile(userId As Integer, gender As String, age As Integer, height As Decimal, weight As Decimal, activityLevelID As Integer, targetGoalID As Integer) As Object Implements INutriary.InsertUserProfile
+        Try
+            cmd = New SqlCommand("usp_InsertUserProfile", conn)
+            cmd.CommandType = CommandType.StoredProcedure
+            cmd.Parameters.AddWithValue("@user_id", userId)
+            cmd.Parameters.AddWithValue("@gender", gender)
+            cmd.Parameters.AddWithValue("@age", age)
+            cmd.Parameters.AddWithValue("@height", height)
+            cmd.Parameters.AddWithValue("@weight", weight)
+            cmd.Parameters.AddWithValue("@activity_level_id", activityLevelID)
+            cmd.Parameters.AddWithValue("@target_goal_id", targetGoalID)
+
+            conn.Open()
+            Dim result = cmd.ExecuteNonQuery()
+            Return result
+        Catch sqlex As SqlException
+            Throw New ArgumentException(sqlex.Message & " " & sqlex.Number)
+        Catch ex As Exception
+            Throw ex
+        Finally
+            cmd.Dispose()
+            conn.Close()
+        End Try
+
+    End Function
+
+    Public Function GetUserDataByUsername(username As String) As List(Of Users) Implements INutriary.GetUserDataByUsername
+        Try
+            cmd = New SqlCommand("usp_GetUserDataByUsername", conn)
+            cmd.CommandType = CommandType.StoredProcedure
+            cmd.Parameters.AddWithValue("@username", username)
+            conn.Open()
+            dr = cmd.ExecuteReader()
+            Dim lstUsers As New List(Of Users)
+            If dr.HasRows Then
+                While dr.Read()
+                    Dim obj As New Users
+                    obj.user_id = dr("user_id")
+                    obj.username = dr("username")
+                    obj.email = dr("email")
+                    obj.password = dr("password")
+                    lstUsers.Add(obj)
+                End While
+            End If
+            Return lstUsers
+        Catch sqlex As SqlException
+            Throw New ArgumentException(sqlex.Message & " " & sqlex.Number)
+        Catch ex As Exception
+            Throw ex
+        Finally
+            cmd.Dispose()
+            conn.Close()
+        End Try
+    End Function
 End Class
